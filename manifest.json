@@ -1,0 +1,17 @@
+{
+  "name": "Cyber Audio Pro",
+  "short_name": "CyberAudio",
+  "description": "Player de áudio local estilo cyber para a web.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#050608",
+  "theme_color": "#ff000f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    }
+  ]
+}

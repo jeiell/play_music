@@ -1,0 +1,1085 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Cyber Audio Pro</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(180deg, #1a080a 0%, #0d0d11 100%);
+            --glass-bg: rgba(25, 20, 22, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --text-main: #df3850;
+            --text-dark: #ffffff;
+            --text-muted: #a09fa4;
+            --slider-track: rgba(255, 255, 255, 0.08);
+            --knob-bg: #121316;
+            --canvas-bg: #160d0f;
+            --btn-active: #e67e22;
+        }
+
+        .light-theme {
+            --bg-gradient: linear-gradient(135deg, #fcefee 0%, #eef5fc 100%);
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --text-main: #df3850;
+            --text-dark: #1a252f;
+            --text-muted: #7f8c8d;
+            --slider-track: rgba(0, 0, 0, 0.1);
+            --knob-bg: #e0e0e0;
+            --canvas-bg: #f5eaebe6;
+            --btn-active: #d35400;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            transition: background 0.3s;
+            overflow: hidden;
+        }
+
+        .window-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            padding: 16px 20px 12px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        /* Cabeçalho Minimalista */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            margin-bottom: 8px;
+        }
+
+        .brand-title {
+            color: var(--text-main);
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 4px;
+        }
+
+        .theme-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 5px 12px;
+            font-size: 11px;
+            color: var(--text-dark);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            /* Garante área mínima de toque */
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .theme-btn:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.95);
+        }
+
+        /* Área Central de Scroll - Previne quebra em telas pequenas */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-grow: 1;
+            overflow-y: auto;
+            scrollbar-width: none;
+            padding-bottom: 8px;
+        }
+        .main-content::-webkit-scrollbar { display: none; }
+
+        /* Área do Player Circular */
+        .player-circle-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 160px;
+            flex-shrink: 0;
+            margin: 4px 0;
+        }
+
+        .player-circle {
+            width: min(190px, 25vh);
+            height: min(190px, 25vh);
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Ícones Orbitais Inteligentes */
+        .nav-icon {
+            --radius: calc(min(190px, 25vh) * 0.4); 
+            position: absolute;
+            top: calc(50% + (var(--radius) * sin(var(--angle))));
+            left: calc(50% + (var(--radius) * cos(var(--angle))));
+            width: 34px;
+            height: 34px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.2s;
+            fill: var(--text-muted);
+            z-index: 10;
+            /* Aumenta área de toque em celulares */
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        .ic-music    { --angle: -90deg; } 
+        .ic-search   { --angle: -30deg; }                     
+        .ic-next     { --angle: 30deg; }                          
+        .ic-repeat   { --angle: 90deg; }                          
+        .ic-shuffle  { --angle: 150deg; }                         
+        .ic-prev     { --angle: 210deg; }                         
+
+        .nav-icon:hover { fill: var(--text-dark); }
+        .nav-icon.active-red {
+            fill: var(--text-main);
+            filter: drop-shadow(0 0 4px var(--text-main));
+        }
+        .nav-icon.active-orange { fill: var(--btn-active); }
+
+        /* Knob Central Slim */
+        .center-knob {
+            width: calc(min(190px, 25vh) * 0.45);
+            height: calc(min(190px, 25vh) * 0.45);
+            background: var(--knob-bg);
+            border-radius: 50%;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 5;
+            /* Touch feedback */
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .center-knob:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .center-knob::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            width: 2px;
+            height: 6px;
+            background: var(--text-main);
+        }
+
+        .play-state-icon {
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 7px 0 7px 12px;
+            border-color: transparent transparent transparent var(--text-main);
+            margin-left: 3px;
+            transition: all 0.1s;
+        }
+
+        .play-state-icon.playing {
+            width: 10px;
+            height: 12px;
+            border-style: double;
+            border-width: 0px 0px 0px 10px;
+            border-color: var(--text-main);
+            margin-left: 0;
+        }
+
+        /* Painel de Informações - Geométrico e Sem Cantos Arredondados Longos */
+        .info-card-panel {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid var(--glass-border);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .search-volume-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .buscar-musica {
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            width: 55%;
+        }
+
+        .track-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .track-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-type {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .track-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .add-music-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-dark);
+            padding: 8px;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s, transform 0.1s;
+            /* Garante tamanho mínimo tocável */
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .add-music-btn:active { 
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(0.98);
+        }
+
+        /* Container do Espectro Waveform */
+        .canvas-container {
+            background: var(--canvas-bg);
+            border: 1px solid var(--glass-border);
+            height: 45px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Equalizador Slim */
+        .eq-section {
+            background: rgba(255, 255, 255, 0.015);
+            padding: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .eq-title {
+            color: var(--text-main);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .eq-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .eq-slider {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .eq-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .eq-label { color: var(--text-dark); }
+        .eq-value { color: var(--text-muted); }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--slider-track);
+            outline: none;
+            margin: 4px 0;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--text-main);
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.2);
+            box-shadow: 0 0 8px rgba(223, 56, 80, 0.5);
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: var(--text-main);
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        input[type=range]::-moz-range-thumb:active {
+            transform: scale(1.2);
+            box-shadow: 0 0 8px rgba(223, 56, 80, 0.5);
+        }
+
+        .volume-control input[type=range]::-webkit-slider-thumb {
+            background: var(--text-dark);
+        }
+
+        .volume-control input[type=range]::-moz-range-thumb {
+            background: var(--text-dark);
+        }
+
+        .footer-credits {
+            text-align: center;
+            font-size: 9px;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding-top: 4px;
+            flex-shrink: 0;
+        }
+
+        /* ==================== MEDIA QUERIES RESPONSIVAS ==================== */
+        
+        /* Telas MUITO pequenas (< 360px - Celulares antigos) */
+        @media (max-width: 360px) {
+            .window-container {
+                padding: 10px 12px 8px 12px;
+                gap: 8px;
+            }
+
+            .brand-title {
+                font-size: 11px;
+                letter-spacing: 2px;
+            }
+
+            .theme-btn {
+                padding: 4px 8px;
+                font-size: 9px;
+            }
+
+            .main-content {
+                gap: 8px;
+                padding-bottom: 4px;
+            }
+
+            .player-circle-wrapper {
+                min-height: 140px;
+                margin: 2px 0;
+            }
+
+            .player-circle {
+                width: min(150px, 22vh);
+                height: min(150px, 22vh);
+            }
+
+            .nav-icon {
+                width: 28px;
+                height: 28px;
+            }
+
+            .nav-icon svg {
+                width: 10px !important;
+                height: 10px !important;
+            }
+
+            .center-knob {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+
+            .info-card-panel {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .track-title {
+                font-size: 12px;
+            }
+
+            .track-type {
+                font-size: 10px;
+            }
+
+            .add-music-btn {
+                padding: 6px;
+                font-size: 11px;
+            }
+
+            .eq-section {
+                padding: 10px;
+            }
+
+            .eq-slider {
+                gap: 4px;
+            }
+
+            .footer-credits {
+                font-size: 8px;
+                padding-top: 2px;
+            }
+        }
+
+        /* Telas pequenas (360px - 480px) */
+        @media (min-width: 360px) and (max-width: 480px) {
+            .window-container {
+                padding: 12px 14px 10px 14px;
+            }
+
+            .brand-title {
+                font-size: 12px;
+                letter-spacing: 2px;
+            }
+
+            .player-circle-wrapper {
+                min-height: 150px;
+                margin: 3px 0;
+            }
+
+            .player-circle {
+                width: min(170px, 23vh);
+                height: min(170px, 23vh);
+            }
+
+            .nav-icon {
+                width: 30px;
+                height: 30px;
+            }
+
+            .info-card-panel {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .track-title {
+                font-size: 13px;
+            }
+
+            .search-volume-row {
+                font-size: 10px;
+            }
+
+            .volume-control {
+                width: 50%;
+            }
+
+            .add-music-btn {
+                padding: 7px;
+                font-size: 12px;
+            }
+
+            .eq-section {
+                padding: 11px;
+            }
+
+            .canvas-container {
+                height: 40px;
+            }
+        }
+
+        /* Telas médias (480px - 768px) */
+        @media (min-width: 480px) and (max-width: 768px) {
+            .window-container {
+                padding: 14px 18px 12px 18px;
+            }
+
+            .player-circle-wrapper {
+                min-height: 170px;
+                margin: 4px 0;
+            }
+
+            .player-circle {
+                width: min(190px, 25vh);
+                height: min(190px, 25vh);
+            }
+
+            .info-card-panel {
+                padding: 14px;
+            }
+
+            .canvas-container {
+                height: 45px;
+            }
+        }
+
+        /* Orientação PAISAGEM (altura menor) */
+        @media (max-height: 500px) {
+            .window-container {
+                padding: 8px 12px 6px 12px;
+            }
+
+            .main-content {
+                gap: 8px;
+                padding-bottom: 4px;
+            }
+
+            .player-circle-wrapper {
+                min-height: 100px;
+                margin: 2px 0;
+            }
+
+            .player-circle {
+                width: min(120px, 18vh);
+                height: min(120px, 18vh);
+            }
+
+            .nav-icon {
+                width: 24px;
+                height: 24px;
+            }
+
+            .nav-icon svg {
+                width: 8px !important;
+                height: 8px !important;
+            }
+
+            .info-card-panel {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .track-title {
+                font-size: 12px;
+            }
+
+            .track-type,
+            .track-meta {
+                font-size: 9px;
+            }
+
+            .add-music-btn {
+                padding: 6px;
+                font-size: 11px;
+            }
+
+            .eq-section {
+                padding: 8px;
+            }
+
+            .eq-title {
+                font-size: 9px;
+                margin-bottom: 4px;
+            }
+
+            .canvas-container {
+                height: 30px;
+            }
+
+            .brand-title {
+                font-size: 11px;
+            }
+
+            .theme-btn {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+        }
+
+        /* Orientação PAISAGEM + Tela pequena */
+        @media (max-height: 500px) and (max-width: 480px) {
+            .player-circle {
+                width: min(100px, 16vh);
+                height: min(100px, 16vh);
+            }
+
+            .nav-icon {
+                width: 20px;
+                height: 20px;
+            }
+
+            .center-knob {
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            }
+        }
+
+        /* Tablets e acima (ajustes finos) */
+        @media (min-width: 768px) {
+            .window-container {
+                width: 600px;
+                height: 90vh;
+                margin: auto;
+                border-radius: 8px;
+            }
+        }
+
+        /* Celulares com notch ou safe area (iPhone X, etc) */
+        @supports (padding: max(0px)) {
+            .window-container {
+                padding-top: max(16px, env(safe-area-inset-top));
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+            }
+        }
+
+        /* Ajuste para iPhone em modo portrait com teclado */
+        @media (max-height: 600px) and (max-width: 480px) {
+            .eq-section {
+                max-height: 100px;
+                overflow-y: auto;
+                scrollbar-width: thin;
+            }
+        }
+
+        /* Suporte para viewport interativa (mobile keyboard) */
+        @media (max-height: 600px) {
+            body {
+                height: 100dvh;
+            }
+
+            .window-container {
+                height: 100dvh;
+                max-height: 100vh;
+            }
+        }
+
+        /* Desabilita pinch zoom enquanto mantém acessibilidade */
+        body {
+            touch-action: pan-y pan-x;
+            overscroll-behavior: contain;
+        }
+
+        /* Melhora feedback visual em touch */
+        button, input[type="file"], .nav-icon, .center-knob {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="window-container">
+        <div class="header">
+            <div class="brand-title">CYBER AUDIO PRO</div>
+            <button id="themeBtn" class="theme-btn">Tema claro</button>
+        </div>
+
+        <div class="main-content">
+            <div class="player-circle-wrapper">
+                <div class="player-circle">
+                    <div class="nav-icon ic-music active-red" id="btnList"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+                    <div class="nav-icon ic-search" id="btnSearch"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="nav-icon ic-next" id="btnNext"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 18l8.5-6L6 6v12zm9-12v12h2V6h-2z"/></svg></div>
+                    <div class="nav-icon ic-repeat" id="btnRepeat"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l4 4 4-4v3h2v-6h-2v4z"/></svg></div>
+                    <div class="nav-icon ic-shuffle" id="btnShuffle"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></div>
+                    <div class="nav-icon ic-prev" id="btnPrev"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></div>
+
+                    <div class="center-knob" id="playBtn">
+                        <div class="play-state-icon" id="playIcon"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card-panel">
+                <div class="search-volume-row">
+                    <div class="buscar-musica" id="statusIndicator">STOPPED</div>
+                    <div class="volume-control">
+                        <span>VOL</span>
+                        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.7">
+                    </div>
+                </div>
+
+                <div class="track-info">
+                    <div class="track-title" id="displayTitle">Nenhuma música carregada</div>
+                    <div class="track-type" id="displayType">Insira arquivos de áudio locais para iniciar</div>
+                    <div class="track-meta">
+                        <span id="timeCurrent">00:00</span>
+                        <span id="trackIndexDisplay">0 / 0</span>
+                        <span id="timeDuration">00:00</span>
+                    </div>
+                </div>
+
+                <div class="add-music-btn" id="folderBtn">Adicionar arquivos da pasta</div>
+                <input type="file" id="audioInput" accept="audio/*" multiple style="display: none;">
+
+                <div class="canvas-container">
+                    <canvas id="spectrumCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="eq-section">
+                <div class="eq-title">EQUALIZADOR ANALÓGICO</div>
+                <div id="eqControls" class="eq-container"></div>
+            </div>
+        </div>
+
+        <div class="footer-credits">Feito por: Natanael Teixeira</div>
+    </div>
+
+    <script>
+        // Elementos da Interface
+        const playBtn = document.getElementById('playBtn');
+        const playIcon = document.getElementById('playIcon');
+        const themeBtn = document.getElementById('themeBtn');
+        const spectrumCanvas = document.getElementById('spectrumCanvas');
+        const eqControls = document.getElementById('eqControls');
+        const folderBtn = document.getElementById('folderBtn');
+        const audioInput = document.getElementById('audioInput');
+        const displayTitle = document.getElementById('displayTitle');
+        const displayType = document.getElementById('displayType');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const timeCurrent = document.getElementById('timeCurrent');
+        const timeDuration = document.getElementById('timeDuration');
+        const trackIndexDisplay = document.getElementById('trackIndexDisplay');
+
+        // Botões de navegação e modos
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const btnRepeat = document.getElementById('btnRepeat');
+        const btnShuffle = document.getElementById('btnShuffle');
+
+        // Estados e Playlist
+        let playlist = [];
+        let currentIndex = 0;
+        let isPlaying = false;
+        let isLightTheme = false;
+        let isRepeat = false;
+        let isShuffle = false;
+
+        // Web Audio API
+        let audioCtx = null;
+        let audioElement = new Audio();
+        let audioSource = null;
+        let analyser = null;
+        let gainNode = null;
+        let eqFilters = [];
+
+        const equalizerBands = [
+            { label: 'GRAVES (120Hz)', freq: 120, type: 'lowshelf', gain: 0 },
+            { label: 'MÉDIOS (1000Hz)', freq: 1000, type: 'peaking', gain: 0 },
+            { label: 'AGUDOS (6000Hz)', freq: 6000, type: 'highshelf', gain: 0 }
+        ];
+
+        // Inicializar o Contexto de Áudio (Apenas após o primeiro clique)
+        function initAudioEngine() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioSource = audioCtx.createMediaElementSource(audioElement);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 128;
+            gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(volumeSlider.value, audioCtx.currentTime);
+
+            // Criar filtros do equalizador de forma encadeada
+            let lastNode = audioSource;
+            equalizerBands.forEach(band => {
+                let filter = audioCtx.createBiquadFilter();
+                filter.type = band.type;
+                filter.frequency.setValueAtTime(band.freq, audioCtx.currentTime);
+                filter.gain.setValueAtTime(band.gain, audioCtx.currentTime);
+                eqFilters.push(filter);
+                lastNode.connect(filter);
+                lastNode = filter;
+            });
+
+            lastNode.connect(gainNode);
+            gainNode.connect(analyser);
+            analyser.connect(audioCtx.destination);
+        }
+
+        // Construção do Equalizador UI
+        function buildEqualizer() {
+            eqControls.innerHTML = equalizerBands.map((band, idx) => `
+                <div class="eq-slider">
+                    <div class="eq-meta">
+                        <span class="eq-label">${band.label}</span>
+                        <span id="eqOut-${idx}" class="eq-value">${band.gain} dB</span>
+                    </div>
+                    <input type="range" min="-12" max="12" value="${band.gain}" data-idx="${idx}">
+                </div>
+            `).join('');
+
+            eqControls.querySelectorAll('input[type=range]').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const idx = e.target.dataset.idx;
+                    const val = parseInt(e.target.value);
+                    document.getElementById(`eqOut-${idx}`).textContent = `${val} dB`;
+                    equalizerBands[idx].gain = val;
+                    if (eqFilters[idx]) {
+                        eqFilters[idx].gain.setValueAtTime(val, audioCtx.currentTime);
+                    }
+                });
+            });
+        }
+
+        // Carregar e reproduzir uma faixa da lista
+        function loadTrack(index) {
+            if (playlist.length === 0) return;
+            currentIndex = index;
+            const track = playlist[currentIndex];
+            
+            const fileURL = URL.createObjectURL(track);
+            audioElement.src = fileURL;
+            
+            displayTitle.textContent = track.name.replace(/\.[^/.]+$/, "");
+            displayType.textContent = "Arquivo local carregado";
+            trackIndexDisplay.textContent = `${currentIndex + 1} / ${playlist.length}`;
+            
+            if (isPlaying) {
+                audioElement.play().catch(() => {});
+            }
+        }
+
+        function togglePlay() {
+            if (playlist.length === 0) return;
+            initAudioEngine();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (isPlaying) {
+                audioElement.pause();
+                isPlaying = false;
+                playIcon.classList.remove('playing');
+                statusIndicator.textContent = "PAUSED";
+            } else {
+                audioElement.play().catch(() => {});
+                isPlaying = true;
+                playIcon.classList.add('playing');
+                statusIndicator.textContent = "PLAYING";
+            }
+        }
+
+        function nextTrack() {
+            if (playlist.length === 0) return;
+            if (isShuffle) {
+                let randIndex = Math.floor(Math.random() * playlist.length);
+                loadTrack(randIndex);
+            } else {
+                let nextIndex = (currentIndex + 1) % playlist.length;
+                loadTrack(nextIndex);
+            }
+            if (!isPlaying) togglePlay();
+            else audioElement.play().catch(() => {});
+        }
+
+        function prevTrack() {
+            if (playlist.length === 0) return;
+            let prevIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+            loadTrack(prevIndex);
+            if (!isPlaying) togglePlay();
+            else audioElement.play().catch(() => {});
+        }
+
+        // Handlers de Arquivo e Input
+        folderBtn.addEventListener('click', () => audioInput.click());
+        audioInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                playlist = files;
+                currentIndex = 0;
+                isPlaying = true;
+                playIcon.classList.add('playing');
+                statusIndicator.textContent = "PLAYING";
+                initAudioEngine();
+                loadTrack(0);
+                audioElement.play().catch(() => {});
+            }
+        });
+
+        playBtn.addEventListener('click', togglePlay);
+        btnNext.addEventListener('click', nextTrack);
+        btnPrev.addEventListener('click', prevTrack);
+
+        // Modos Alternáveis (Toggles)
+        btnRepeat.addEventListener('click', () => {
+            isRepeat = !isRepeat;
+            btnRepeat.classList.toggle('active-orange', isRepeat);
+            audioElement.loop = isRepeat;
+        });
+
+        btnShuffle.addEventListener('click', () => {
+            isShuffle = !isShuffle;
+            btnShuffle.classList.toggle('active-orange', isShuffle);
+        });
+
+        // Eventos e Sincronia de Tempo do Áudio
+        volumeSlider.addEventListener('input', (e) => {
+            if (gainNode) {
+                gainNode.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+            }
+        });
+
+        audioElement.addEventListener('timeupdate', () => {
+            const curMin = Math.floor(audioElement.currentTime / 60).toString().padStart(2, '0');
+            const curSec = Math.floor(audioElement.currentTime % 60).toString().padStart(2, '0');
+            timeCurrent.textContent = `${curMin}:${curSec}`;
+            
+            if (audioElement.duration) {
+                const durMin = Math.floor(audioElement.duration / 60).toString().padStart(2, '0');
+                const durSec = Math.floor(audioElement.duration % 60).toString().padStart(2, '0');
+                timeDuration.textContent = `${durMin}:${durSec}`;
+            }
+        });
+
+        audioElement.addEventListener('ended', () => {
+            if (!isRepeat) nextTrack();
+        });
+
+        // Renderização do Espectro/Waveform (Canvas) Real do Som
+        function drawSpectrum() {
+            requestAnimationFrame(drawSpectrum);
+            const ctx = spectrumCanvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const w = spectrumCanvas.width / dpr;
+            const h = spectrumCanvas.height / dpr;
+            
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = isLightTheme ? 'rgba(0,0,0,0.015)' : 'rgba(0,0,0,0.15)';
+            ctx.fillRect(0, 0, w, h);
+
+            const barsCount = 45;
+            const barWidth = w / barsCount;
+
+            let dataArray = new Uint8Array(barsCount);
+            if (analyser && isPlaying) {
+                analyser.getByteFrequencyData(dataArray);
+            }
+
+            for (let i = 0; i < barsCount; i++) {
+                let value = dataArray[i] || 0;
+                // Normaliza e gera oscilação sutil simulada caso esteja pausado ou sem música
+                if (!isPlaying) {
+                    value = 4; 
+                }
+                const percent = value / 255;
+                const barH = Math.max(4, h * percent * 0.85);
+                const x = i * barWidth;
+                const y = (h - barH) / 2;
+                
+                ctx.fillStyle = '#df3850';
+                ctx.fillRect(x + 1, y, barWidth - 2, barH);
+            }
+        }
+
+        function initCanvasScale() {
+            const rect = spectrumCanvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Garante que o canvas não fique pequeno demais
+            const minWidth = Math.max(rect.width, 100);
+            const minHeight = Math.max(rect.height, 30);
+            
+            spectrumCanvas.width = minWidth * dpr;
+            spectrumCanvas.height = minHeight * dpr;
+            const ctx = spectrumCanvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+        }
+
+        // Alteração de Tema
+        themeBtn.addEventListener('click', () => {
+            isLightTheme = !isLightTheme;
+            document.body.classList.toggle('light-theme', isLightTheme);
+            themeBtn.textContent = isLightTheme ? 'Tema escuro' : 'Tema claro';
+        });
+
+        // Previne zoom em duplo toque
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Melhor suporte a orientação
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                initCanvasScale();
+                drawSpectrum();
+            }, 100);
+        });
+
+        // Registrar Service Worker para funcionar offline
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js').catch(() => {});
+        }
+
+        // Setup Inicial do App
+        buildEqualizer();
+        setTimeout(() => {
+            initCanvasScale();
+            drawSpectrum();
+        }, 100);
+        window.addEventListener('resize', initCanvasScale);
+    </script>
+</body>
+</html>
