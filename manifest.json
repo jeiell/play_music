@@ -16,9 +16,10 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/play_/index.html",
+  "scope": "/play_/",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
   "orientation": "portrait-primary",
   "background_color": "#1a080a",
   "theme_color": "#df3850",
