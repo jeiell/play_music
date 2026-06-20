@@ -1,27 +1,21 @@
 {
-  "short_name": "Cyber Audio",
   "name": "Cyber Audio Pro",
-  "description": "Aplicativo de música com equalizador profissional e reprodutor de áudio",
+  "short_name": "Cyber Audio",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#df3850",
   "icons": [
     {
       "src": "./icon-192.png",
-      "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "./icon-512.png",
-      "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
-  ],
-  "start_url": "/play_/index.html",
-  "scope": "/play_/",
-  "display": "standalone",
-  "display_override": ["standalone", "fullscreen"],
-  "orientation": "portrait-primary",
-  "background_color": "#1a080a",
-  "theme_color": "#df3850",
-  "categories": ["music", "entertainment"]
+  ]
 }
+
