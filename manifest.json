@@ -3,7 +3,7 @@
   "short_name": "Cyber Audio",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#0f0d12",
   "theme_color": "#df3850",
   "icons": [
     {
