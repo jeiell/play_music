@@ -1,17 +1,20 @@
 {
-  "name": "Cyber Audio Pro",
-  "short_name": "CyberAudio",
-  "description": "Player de áudio local estilo cyber para a web.",
-  "start_url": ".",
-  "scope": ".",
-  "display": "standalone",
-  "background_color": "#050608",
-  "theme_color": "#ff000f",
+  "short_name": "MusicApp",
+  "name": "Meu Aplicativo de Música",
   "icons": [
     {
-      "src": "icon.svg",
-      "type": "image/svg+xml",
+      "src": "icon-192.png",
+      "type": "image/png",
       "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
-  ]
+  ],
+  "start_url": "/",
+  "background_color": "#121212",
+  "display": "standalone",
+  "theme_color": "#1db954"
 }
